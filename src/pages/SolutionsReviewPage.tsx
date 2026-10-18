@@ -105,8 +105,60 @@ export function SolutionsReviewPage({ attemptId, mockTitle, onNavigate }: Props)
 
   if (loading && !sections[currentSection]) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
-        <div className="animate-pulse text-neutral-400 text-sm">Loading solutions...</div>
+      <div className="min-h-screen bg-neutral-50 flex flex-col">
+        <header className="bg-white border-b border-neutral-200 px-4 sm:px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3 animate-pulse">
+            <div className="w-8 h-8 rounded bg-neutral-200" />
+            <div>
+              <div className="h-4 bg-neutral-200 rounded w-32 mb-1.5" />
+              <div className="h-3 bg-neutral-200 rounded w-24" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 animate-pulse">
+            <div className="h-8 w-20 bg-neutral-200 rounded-lg" />
+            <div className="h-8 w-8 bg-neutral-200 rounded-lg" />
+            <div className="h-8 w-8 bg-neutral-200 rounded-lg" />
+          </div>
+        </header>
+
+        <div className="flex-1 flex overflow-hidden">
+          <div className="w-1/2 border-r border-neutral-200 p-6 animate-pulse">
+            <div className="h-3 bg-neutral-200 rounded w-20 mb-4" />
+            <div className="space-y-2.5">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-3 bg-neutral-200 rounded" style={{ width: `${90 - (i % 3) * 15}%` }} />
+              ))}
+            </div>
+          </div>
+
+          <div className="w-1/2 overflow-y-auto p-6">
+            <div className="max-w-2xl mx-auto space-y-4 animate-pulse">
+              <div className="h-3 bg-neutral-200 rounded w-12" />
+              <div className="card p-6">
+                <div className="h-4 bg-neutral-200 rounded w-full mb-2" />
+                <div className="h-4 bg-neutral-200 rounded w-3/4 mb-5" />
+                <div className="space-y-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="h-11 bg-neutral-100 rounded-lg border border-neutral-200" />
+                  ))}
+                </div>
+              </div>
+              <div className="card p-5">
+                <div className="h-3 bg-neutral-200 rounded w-16 mb-4" />
+                <div className="h-24 bg-neutral-100 rounded" />
+              </div>
+            </div>
+          </div>
+
+          <aside className="lg:w-72 bg-white border-l border-neutral-200 p-4 hidden lg:block animate-pulse">
+            <div className="h-3 bg-neutral-200 rounded w-16 mb-3" />
+            <div className="grid grid-cols-5 gap-2">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <div key={i} className="aspect-square rounded-md bg-neutral-200" />
+              ))}
+            </div>
+          </aside>
+        </div>
       </div>
     );
   }

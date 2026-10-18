@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
+import { Spinner } from '@/components/Spinner';
 import type { Mock, Profile, Question, QuestionSet, GradingSheet, MockAccess, Section, QuestionType, Difficulty, GradingScope } from '@/types';
 import { SECTION_ORDER } from '@/types';
 import type { Route } from '@/App';
@@ -121,7 +122,30 @@ export function AdminPanel({ onNavigate }: { onNavigate: (route: Route) => void 
 
             <main className="flex-1 min-w-0">
               {loadingMocks ? (
-                <div className="card p-12 text-center text-neutral-400">Loading...</div>
+                <div>
+                  <div className="card p-5 mb-5 animate-pulse">
+                    <div className="h-5 bg-neutral-200 rounded w-1/3 mb-3" />
+                    <div className="h-3 bg-neutral-200 rounded w-1/2 mb-4" />
+                    <div className="flex gap-4">
+                      <div className="h-3 bg-neutral-200 rounded w-20" />
+                      <div className="h-3 bg-neutral-200 rounded w-20" />
+                      <div className="h-3 bg-neutral-200 rounded w-20" />
+                    </div>
+                  </div>
+                  <div className="flex gap-1 p-1 bg-neutral-100 rounded-lg mb-5 w-fit animate-pulse">
+                    <div className="h-8 w-36 bg-neutral-200 rounded-md" />
+                    <div className="h-8 w-32 bg-neutral-200 rounded-md" />
+                    <div className="h-8 w-32 bg-neutral-200 rounded-md" />
+                  </div>
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="card p-4 animate-pulse">
+                        <div className="h-4 bg-neutral-200 rounded w-3/4 mb-2" />
+                        <div className="h-3 bg-neutral-200 rounded w-1/2" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ) : !selectedMock ? (
                 <div className="card p-12 text-center">
                   <BookOpen className="w-12 h-12 text-neutral-300 mx-auto mb-3" />
@@ -397,7 +421,7 @@ function MockWorkspace({
               </button>
             ) : (
               <button onClick={handleLock} disabled={togglingLock} className="btn-secondary text-sm">
-                <Lock className="w-3.5 h-3.5" />
+                {togglingLock ? <Spinner className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
                 {togglingLock ? 'Working...' : 'Lock'}
               </button>
             )}
@@ -406,7 +430,7 @@ function MockWorkspace({
               disabled={togglingPublish}
               className={mock.is_published ? 'btn-danger text-sm' : 'btn-success text-sm'}
             >
-              <CheckCircle2 className="w-3.5 h-3.5" />
+              {togglingPublish ? <Spinner className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
               {togglingPublish ? 'Working...' : mock.is_published ? 'Unpublish' : 'Publish'}
             </button>
             {solutionsReleased ? (
@@ -423,6 +447,7 @@ function MockWorkspace({
                 disabled={togglingSolutions}
                 className="btn-secondary text-sm"
               >
+                {togglingSolutions && <Spinner className="w-3.5 h-3.5" />}
                 {togglingSolutions ? 'Working...' : 'Release Solutions'}
               </button>
             )}
@@ -829,7 +854,22 @@ function QuestionsTab({ mock, locked }: { mock: Mock; locked: boolean }) {
 //   "answer_tolerance": 0,             -- optional, TITA only, defaults to 0
 //   "marks": 3,                        -- optional, defaults to 3
 //   "negative_marks": 1,               -- optional, defaults to 1
-//   "difficulty": "medium"             -- optional: easy | medium | hard | null
+//   "difficulty": "medium",            -- optional: easy | medium | hard | null
+//
+//   -- Everything below is optional. Omit any/all of it and fill it
+//   -- in later via the question editor.
+//   "attempt_priority": "A",           -- optional: "A" | "B" | "C"
+//   "sub_topic": "Reading Comprehension", -- optional string
+//   "topper_time": "02:19",            -- optional string, stored as typed
+//   "topper_attempt_pct": 94.8,        -- optional number
+//   "topper_accuracy_pct": 60.34,      -- optional number
+//   "topper_p_value": 57.2,            -- optional number
+//   "overall_time": "05:28",           -- optional string, stored as typed
+//   "overall_attempt_pct": 84.64,      -- optional number
+//   "overall_accuracy_pct": 69.4,      -- optional number
+//   "overall_p_value": 58.74,          -- optional number
+//   "solution_image_url": "https://...", -- optional string
+//   "solution_video_url": "https://youtube.com/watch?v=..." -- optional string
 // }
 
 interface ImportQuestionInput {
@@ -842,6 +882,23 @@ interface ImportQuestionInput {
   marks: number;
   negative_marks: number;
   difficulty: Difficulty | null;
+
+  // All 12 of the below are optional on import (unlike the manual
+  // QuestionEditor form, which requires the first 6). This lets a
+  // passage/set be imported before topper data or solutions exist,
+  // with the rest filled in later via the manual editor.
+  attempt_priority: 'A' | 'B' | 'C' | null;
+  sub_topic: string | null;
+  topper_time: string | null;
+  topper_attempt_pct: number | null;
+  topper_accuracy_pct: number | null;
+  topper_p_value: number | null;
+  overall_time: string | null;
+  overall_attempt_pct: number | null;
+  overall_accuracy_pct: number | null;
+  overall_p_value: number | null;
+  solution_image_url: string | null;
+  solution_video_url: string | null;
 }
 
 interface ImportSetInput {
@@ -898,6 +955,39 @@ function validateQuestion(raw: any, label: string, errors: string[]): ImportQues
     return null;
   }
 
+  // The 12 analytics/solution fields are all optional -- only
+  // validated (and only cause an error) if present at all, since a
+  // missing field just means "not provided yet."
+  if (raw.attempt_priority !== undefined && raw.attempt_priority !== null && !['A', 'B', 'C'].includes(raw.attempt_priority)) {
+    errors.push(`${label}: attempt_priority must be "A", "B", "C", or omitted`);
+    return null;
+  }
+  if (raw.sub_topic !== undefined && raw.sub_topic !== null && typeof raw.sub_topic !== 'string') {
+    errors.push(`${label}: sub_topic must be a string or omitted`);
+    return null;
+  }
+  for (const field of ['topper_time', 'overall_time']) {
+    if (raw[field] !== undefined && raw[field] !== null && typeof raw[field] !== 'string') {
+      errors.push(`${label}: ${field} must be a string (e.g. "02:19") or omitted`);
+      return null;
+    }
+  }
+  for (const field of [
+    'topper_attempt_pct', 'topper_accuracy_pct', 'topper_p_value',
+    'overall_attempt_pct', 'overall_accuracy_pct', 'overall_p_value',
+  ]) {
+    if (raw[field] !== undefined && raw[field] !== null && typeof raw[field] !== 'number') {
+      errors.push(`${label}: ${field} must be a number (e.g. 94.8) or omitted`);
+      return null;
+    }
+  }
+  for (const field of ['solution_image_url', 'solution_video_url']) {
+    if (raw[field] !== undefined && raw[field] !== null && typeof raw[field] !== 'string') {
+      errors.push(`${label}: ${field} must be a string URL or omitted`);
+      return null;
+    }
+  }
+
   return {
     question_type: raw.question_type,
     question_text: raw.question_text,
@@ -908,6 +998,18 @@ function validateQuestion(raw: any, label: string, errors: string[]): ImportQues
     marks: typeof raw.marks === 'number' ? raw.marks : 3,
     negative_marks: typeof raw.negative_marks === 'number' ? raw.negative_marks : 1,
     difficulty: raw.difficulty ?? null,
+    attempt_priority: raw.attempt_priority ?? null,
+    sub_topic: raw.sub_topic ?? null,
+    topper_time: raw.topper_time ?? null,
+    topper_attempt_pct: raw.topper_attempt_pct ?? null,
+    topper_accuracy_pct: raw.topper_accuracy_pct ?? null,
+    topper_p_value: raw.topper_p_value ?? null,
+    overall_time: raw.overall_time ?? null,
+    overall_attempt_pct: raw.overall_attempt_pct ?? null,
+    overall_accuracy_pct: raw.overall_accuracy_pct ?? null,
+    overall_p_value: raw.overall_p_value ?? null,
+    solution_image_url: raw.solution_image_url ?? null,
+    solution_video_url: raw.solution_video_url ?? null,
   };
 }
 
@@ -973,6 +1075,10 @@ function validateImportPayload(raw: any): { data: ParsedImport | null; errors: s
 
 function downloadTemplate(section: Section) {
   const template = {
+    _note:
+      'attempt_priority through solution_video_url are all optional -- omit any ' +
+      'of them (or leave them out entirely) and fill them in later via the ' +
+      'question editor. This "_note" key itself is ignored on import.',
     section,
     sets: [
       {
@@ -993,6 +1099,18 @@ function downloadTemplate(section: Section) {
             marks: 3,
             negative_marks: 1,
             difficulty: 'medium',
+            attempt_priority: 'A',
+            sub_topic: 'Reading Comprehension',
+            topper_time: '02:19',
+            topper_attempt_pct: 94.8,
+            topper_accuracy_pct: 60.34,
+            topper_p_value: 57.2,
+            overall_time: '05:28',
+            overall_attempt_pct: 84.64,
+            overall_accuracy_pct: 69.4,
+            overall_p_value: 58.74,
+            solution_image_url: 'https://...',
+            solution_video_url: 'https://youtube.com/watch?v=...',
           },
         ],
       },
@@ -1008,6 +1126,18 @@ function downloadTemplate(section: Section) {
         marks: 3,
         negative_marks: 0,
         difficulty: 'easy',
+        attempt_priority: 'B',
+        sub_topic: 'Arithmetic',
+        topper_time: '01:40',
+        topper_attempt_pct: 72.1,
+        topper_accuracy_pct: 88.0,
+        topper_p_value: 63.5,
+        overall_time: '03:05',
+        overall_attempt_pct: 51.2,
+        overall_accuracy_pct: 44.9,
+        overall_p_value: 39.8,
+        solution_image_url: null,
+        solution_video_url: null,
       },
     ],
   };
@@ -1122,6 +1252,18 @@ function ImportQuestionsModal({
           marks: q.marks,
           negative_marks: q.negative_marks,
           difficulty: q.difficulty,
+          attempt_priority: q.attempt_priority,
+          sub_topic: q.sub_topic,
+          topper_time: q.topper_time,
+          topper_attempt_pct: q.topper_attempt_pct,
+          topper_accuracy_pct: q.topper_accuracy_pct,
+          topper_p_value: q.topper_p_value,
+          overall_time: q.overall_time,
+          overall_attempt_pct: q.overall_attempt_pct,
+          overall_accuracy_pct: q.overall_accuracy_pct,
+          overall_p_value: q.overall_p_value,
+          solution_image_url: q.solution_image_url,
+          solution_video_url: q.solution_video_url,
         });
       }
     }
@@ -1141,6 +1283,18 @@ function ImportQuestionsModal({
         marks: q.marks,
         negative_marks: q.negative_marks,
         difficulty: q.difficulty,
+        attempt_priority: q.attempt_priority,
+        sub_topic: q.sub_topic,
+        topper_time: q.topper_time,
+        topper_attempt_pct: q.topper_attempt_pct,
+        topper_accuracy_pct: q.topper_accuracy_pct,
+        topper_p_value: q.topper_p_value,
+        overall_time: q.overall_time,
+        overall_attempt_pct: q.overall_attempt_pct,
+        overall_accuracy_pct: q.overall_accuracy_pct,
+        overall_p_value: q.overall_p_value,
+        solution_image_url: q.solution_image_url,
+        solution_video_url: q.solution_video_url,
       });
     }
 
@@ -1846,7 +2000,18 @@ function GradingTab({ mock }: { mock: Mock }) {
       )}
 
       {loading ? (
-        <div className="card p-8 text-center text-neutral-400">Loading...</div>
+        <div className="card overflow-hidden animate-pulse">
+          <div className="bg-neutral-50 border-b border-neutral-200 px-4 py-3">
+            <div className="h-3 bg-neutral-200 rounded w-1/3" />
+          </div>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="px-4 py-3 border-b border-neutral-100 flex gap-6">
+              <div className="h-3 bg-neutral-200 rounded w-16" />
+              <div className="h-3 bg-neutral-200 rounded w-16" />
+              <div className="h-3 bg-neutral-200 rounded w-12" />
+            </div>
+          ))}
+        </div>
       ) : scopeSheets.length === 0 ? (
         <div className="card p-12 text-center">
           <Award className="w-12 h-12 text-neutral-300 mx-auto mb-3" />
@@ -2126,7 +2291,17 @@ function AccessTab({ mock }: { mock: Mock }) {
       </div>
 
       {loading ? (
-        <div className="card p-8 text-center text-neutral-400">Loading...</div>
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="card p-4 flex items-center gap-3 animate-pulse">
+              <div className="w-9 h-9 rounded-full bg-neutral-200" />
+              <div className="flex-1">
+                <div className="h-3.5 bg-neutral-200 rounded w-1/3 mb-2" />
+                <div className="h-3 bg-neutral-200 rounded w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : accessList.length === 0 ? (
         <div className="card p-12 text-center">
           <Users className="w-12 h-12 text-neutral-300 mx-auto mb-3" />
@@ -2298,7 +2473,18 @@ function StudentsTab() {
     <div>
       <h2 className="text-xl font-bold text-neutral-900 mb-4">All Students</h2>
       {loading ? (
-        <div className="card p-8 text-center text-neutral-400">Loading...</div>
+        <div className="card overflow-hidden animate-pulse">
+          <div className="bg-neutral-50 border-b border-neutral-200 px-4 py-3">
+            <div className="h-3 bg-neutral-200 rounded w-1/4" />
+          </div>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="px-4 py-3 border-b border-neutral-100 flex gap-6">
+              <div className="h-3 bg-neutral-200 rounded w-28" />
+              <div className="h-3 bg-neutral-200 rounded w-40" />
+              <div className="h-3 bg-neutral-200 rounded w-20" />
+            </div>
+          ))}
+        </div>
       ) : students.length === 0 ? (
         <div className="card p-12 text-center">
           <Users className="w-12 h-12 text-neutral-300 mx-auto mb-3" />

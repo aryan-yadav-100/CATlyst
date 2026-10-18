@@ -48,16 +48,20 @@ const EXAM_STYLES = `
     font-family:Arial, "Segoe UI", Helvetica, sans-serif;
     color:var(--exam-text);
     background:#ffffff;
-    min-height:100vh;
+    height:100vh;
+    height:100dvh;
+    min-height:0;
+    width:100%;
     display:flex;
     flex-direction:column;
+    overflow:hidden;
   }
 
   .exam-btn{
     font-family:inherit;
     font-size:13px;
     font-weight:600;
-    padding:9px 16px;
+    padding:9px 14px;
     border-radius:3px;
     border:1px solid var(--exam-border-c);
     background:#fff;
@@ -143,12 +147,16 @@ const EXAM_STYLES = `
   .exam-test-header{
     background:var(--exam-navy);
     color:#fff;
-    padding:10px 20px;
+    padding:10px 18px;
+    min-height:54px;
+    box-sizing:border-box;
     display:flex;
     align-items:center;
     justify-content:space-between;
     flex-wrap:wrap;
     gap:10px;
+    flex-shrink:0;
+    border-bottom:1px solid #0b2a4b;
   }
 
   .exam-test-header .exam-title{
@@ -179,22 +187,31 @@ const EXAM_STYLES = `
   /* ---- Body layout ---- */
 
   .exam-test-body{
-    flex:1;
+    flex:1 1 auto;
     display:flex;
     min-height:0;
+    height:0;
+    overflow:hidden;
+    align-items:stretch;
   }
 
   .exam-passage-pane{
-    width:52%;
+    flex:1 1 0;
+    width:auto;
+    min-width:0;
     border-right:2px solid var(--exam-border-c);
-    padding:20px 22px;
+    padding:18px 20px;
     overflow-y:auto;
-    background:#fdfdfc;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    background:#fff;
     min-height:0;
+    height:100%;
+    box-sizing:border-box;
   }
 
   .exam-passage-pane h3{
-    margin:0 0 10px;
+    margin:0 0 12px;
     font-size:13px;
     color:var(--exam-navy);
     text-transform:uppercase;
@@ -217,19 +234,24 @@ const EXAM_STYLES = `
   }
 
   .exam-qa-pane{
-    width:48%;
+    flex:1 1 0;
+    width:auto;
     display:flex;
     flex-direction:column;
     min-width:0;
     min-height:0;
+    height:100%;
+    overflow:hidden;
   }
 
-  .exam-qa-pane.exam-full{ width:100%; }
+  .exam-qa-pane.exam-full{ flex:1 1 0; width:auto; }
 
   .exam-qa-scroll{
-    flex:1;
+    flex:1 1 auto;
     overflow-y:auto;
-    padding:20px 22px;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    padding:18px 20px;
     min-height:0;
   }
 
@@ -289,42 +311,80 @@ const EXAM_STYLES = `
     flex-shrink:0;
   }
 
+  .exam-tita-wrap{ display:flex; flex-direction:column; align-items:flex-start; gap:0; }
   .exam-tita-box{
     width:100%;
     max-width:260px;
     padding:10px 12px;
-    border:1px solid var(--exam-border-c);
-    border-radius:4px;
+    border:1px solid #888;
+    border-radius:2px;
     font-size:15px;
     font-family:inherit;
+    background:#fff;
+    color:#111;
+    min-height:36px;
   }
+  .exam-tita-keypad{
+    width:181px;
+    box-sizing:border-box;
+    padding:8px 10px;
+    margin-left:0;
+    background:#f2f2f2;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+  }
+  .exam-tita-key{
+    min-width:30px;
+    height:41px;
+    padding:0 8px;
+    border:1px solid #888;
+    border-radius:10px;
+    background:linear-gradient(#fff,#e9e9e9);
+    color:#111;
+    font-size:17px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .exam-tita-key:active{ background:#d9e7f3; }
+  .exam-tita-key-wide{ height:41px; min-width:0; padding:0 9px; font-size:16px; }
+  .exam-tita-key-row{ display:flex; justify-content:center; gap:5px; }
 
   .exam-action-row{
     display:flex;
     gap:8px;
     flex-wrap:wrap;
-    padding:14px 22px;
+    padding:12px 16px;
     border-top:1px solid var(--exam-border-c);
-    background:#fafbfc;
+    background:#fff;
+    flex-shrink:0;
   }
 
   .exam-nav-row{
     display:flex;
     justify-content:space-between;
-    padding:10px 22px;
+    gap:8px;
+    padding:10px 16px;
     border-top:1px solid var(--exam-border-c);
+    background:#fff;
+    flex-shrink:0;
   }
 
   /* ---- Palette ---- */
 
   .exam-palette-pane{
-    width:220px;
+    flex:0 0 238px;
+    width:238px;
+    box-sizing:border-box;
     border-left:1px solid var(--exam-border-c);
-    padding:16px;
+    padding:16px 14px;
     overflow-y:auto;
-    background:#f7f8fa;
-    flex-shrink:0;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    background:#e7f5fb;
     min-height:0;
+    height:100%;
   }
 
   .exam-palette-pane h4{
@@ -336,14 +396,15 @@ const EXAM_STYLES = `
 
   .exam-palette-grid{
     display:grid;
-    grid-template-columns:repeat(5,1fr);
+    grid-template-columns:repeat(4,minmax(0,1fr));
     gap:6px;
     margin-bottom:16px;
   }
 
   .exam-pal-btn{
-    width:34px;
-    height:34px;
+    width:100%;
+    max-width:42px;
+    height:38px;
     border-radius:4px;
     border:none;
     font-size:12px;
@@ -402,7 +463,22 @@ const EXAM_STYLES = `
   }
 
   .exam-shell *::-webkit-scrollbar{ width:9px; height:9px; }
-  .exam-shell *::-webkit-scrollbar-thumb{ background:#c6cdd4; border-radius:5px; }
+  .exam-shell *::-webkit-scrollbar-track{ background:#f1f3f5; }
+  .exam-shell *::-webkit-scrollbar-thumb{ background:#aeb8c2; border-radius:5px; }
+  @media (max-width: 900px){
+    .exam-palette-pane{ flex-basis:190px; width:190px; padding:12px 10px; }
+    .exam-passage-pane, .exam-qa-scroll{ padding:14px; }
+    .exam-action-row, .exam-nav-row{ padding:10px; }
+    .exam-btn{ padding:8px 10px; }
+  }
+  @media (max-width: 640px){
+    .exam-test-header{ padding:8px 12px; }
+    .exam-test-body{ flex-wrap:wrap; }
+    .exam-passage-pane{ flex:0 0 100%; width:100%; height:42%; border-right:0; border-bottom:1px solid var(--exam-border-c); }
+    .exam-qa-pane, .exam-qa-pane.exam-full{ flex:1 1 100%; width:100%; min-height:0; }
+    .exam-palette-pane{ flex:0 0 100%; width:100%; height:auto; max-height:150px; border-left:0; border-top:1px solid var(--exam-border-c); }
+    .exam-palette-grid{ grid-template-columns:repeat(8,minmax(0,1fr)); }
+  }
 `;
 
 function ExamShell({ children }: { children: ReactNode }) {
@@ -499,6 +575,21 @@ function QuestionPanel({
   goToQuestion: (index: number) => void;
 }) {
   const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const titaInputRef = useRef<HTMLInputElement>(null);
+
+  const updateTitaAnswer = (nextValue: string) => {
+    engine.setAnswer(currentQuestion.id, nextValue || null);
+  };
+
+  const moveTitaCaret = (direction: -1 | 1) => {
+    const input = titaInputRef.current;
+    if (!input) return;
+    input.focus();
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? start;
+    const position = direction < 0 ? Math.max(0, start - 1) : Math.min(input.value.length, end + 1);
+    input.setSelectionRange(position, position);
+  };
 
   return (
     <>
@@ -535,13 +626,32 @@ function QuestionPanel({
             })}
           </div>
         ) : (
-          <input
-            type="text"
-            value={currentResponse?.selectedAnswer ?? ''}
-            onChange={(e) => engine.setAnswer(currentQuestion.id, e.target.value || null)}
-            placeholder="Type your answer"
-            className="exam-tita-box"
-          />
+          <div className="exam-tita-wrap">
+            <input
+              ref={titaInputRef}
+              type="text"
+              value={currentResponse?.selectedAnswer ?? ''}
+              onChange={(e) => updateTitaAnswer(e.target.value)}
+              placeholder=""
+              aria-label="Type your numerical answer"
+              className="exam-tita-box"
+            />
+            <div className="exam-tita-keypad" aria-label="Virtual number keyboard">
+              <button type="button" className="exam-tita-key exam-tita-key-wide" onClick={() => updateTitaAnswer((currentResponse?.selectedAnswer ?? '').slice(0, -1))}>Backspace</button>
+              {['7,8,9', '4,5,6', '1,2,3', '0,.,-'].map((row) => (
+                <div className="exam-tita-key-row" key={row}>
+                  {row.split(',').map((key) => (
+                    <button type="button" className="exam-tita-key" key={key} onClick={() => updateTitaAnswer((currentResponse?.selectedAnswer ?? '') + key)}>{key}</button>
+                  ))}
+                </div>
+              ))}
+              <div className="exam-tita-key-row">
+                <button type="button" className="exam-tita-key" aria-label="Move cursor left" onClick={() => moveTitaCaret(-1)}>←</button>
+                <button type="button" className="exam-tita-key" aria-label="Move cursor right" onClick={() => moveTitaCaret(1)}>→</button>
+              </div>
+              <button type="button" className="exam-tita-key exam-tita-key-wide" onClick={() => updateTitaAnswer('')}>Clear All</button>
+            </div>
+          </div>
         )}
       </div>
 

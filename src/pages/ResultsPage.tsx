@@ -218,8 +218,65 @@ export function ResultsPage({ attemptId, onNavigate }: Props) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
-        <div className="animate-pulse text-neutral-400 text-sm">Loading your result...</div>
+      <div className="min-h-screen bg-neutral-50">
+        <header className="bg-white border-b border-neutral-200 sticky top-0 z-10">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+            <div className="h-5 bg-neutral-200 rounded w-24 animate-pulse" />
+            <div className="h-5 bg-neutral-200 rounded w-40 animate-pulse" />
+          </div>
+        </header>
+
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+          <div className="flex flex-wrap gap-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-9 w-28 bg-neutral-200 rounded-lg animate-pulse" />
+            ))}
+          </div>
+
+          {/* Overall score card skeleton */}
+          <div className="card p-6 sm:p-8 animate-pulse">
+            <div className="flex items-start justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl bg-neutral-200" />
+                <div>
+                  <div className="h-3 bg-neutral-200 rounded w-24 mb-2" />
+                  <div className="h-8 bg-neutral-200 rounded w-20" />
+                </div>
+              </div>
+              <div className="flex gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="text-right">
+                    <div className="h-3 bg-neutral-200 rounded w-16 mb-2" />
+                    <div className="h-6 bg-neutral-200 rounded w-12" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Section cards skeleton */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="card p-5 animate-pulse">
+                <div className="h-3 bg-neutral-200 rounded w-10 mb-2" />
+                <div className="h-3 bg-neutral-200 rounded w-32 mb-4" />
+                <div className="h-7 bg-neutral-200 rounded w-14 mb-2" />
+                <div className="h-3 bg-neutral-200 rounded w-24 mb-3" />
+                <div className="h-3 bg-neutral-200 rounded w-28" />
+              </div>
+            ))}
+          </div>
+
+          {/* Question grid skeleton */}
+          <div className="card p-6 animate-pulse">
+            <div className="h-4 bg-neutral-200 rounded w-40 mb-4" />
+            <div className="grid grid-cols-8 sm:grid-cols-12 gap-2">
+              {Array.from({ length: 24 }).map((_, i) => (
+                <div key={i} className="aspect-square rounded-md bg-neutral-200" />
+              ))}
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -295,6 +352,12 @@ export function ResultsPage({ attemptId, onNavigate }: Props) {
                 </p>
               )}
             </div>
+            <button
+              onClick={() => onNavigate({ name: 'solutions', attemptId, mockTitle: review.mock_title ?? undefined })}
+              className="btn-primary text-sm"
+            >
+              Review Solutions
+            </button>
           </div>
         </div>
       </header>
@@ -376,7 +439,7 @@ export function ResultsPage({ attemptId, onNavigate }: Props) {
 
                 return (
                   <div key={section} className="card p-5">
-                    <p className="text-sm font-bold text-black uppercase tracking-wide mb-1">
+                    <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-1">
                       {section}
                     </p>
                     <p className="text-sm text-neutral-500 mb-3">{SECTION_LABELS[section]}</p>
@@ -392,15 +455,52 @@ export function ResultsPage({ attemptId, onNavigate }: Props) {
               })}
             </div>
 
-            <div className="card p-6 flex flex-col items-center justify-center text-center gap-3">
-              <h3 className="font-semibold text-neutral-800">Ready to review your answers?</h3>
-              <p className="text-sm text-neutral-500">Open the solutions review to go through the questions.</p>
-              <button
-                onClick={() => onNavigate({ name: 'solutions', attemptId, mockTitle: review.mock_title ?? undefined })}
-                className="btn-primary text-sm"
-              >
-                Review Solutions
-              </button>
+            <div className="card p-6">
+              <h3 className="font-semibold text-neutral-800 mb-4">Question-wise Overview</h3>
+              <div className="space-y-6">
+                {SECTION_ORDER.map((section) => {
+                  const sectionResponses = responses.filter((r) => r.section === section);
+                  if (sectionResponses.length === 0) return null;
+
+                  return (
+                    <div key={section}>
+                      <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-2">
+                        {section}
+                      </p>
+                      <div className="grid grid-cols-8 sm:grid-cols-12 gap-2">
+                        {sectionResponses.map((r, idx) => {
+                          const colorClass = isSkipped(r)
+                            ? 'bg-neutral-100 text-neutral-400'
+                            : isCorrect(r)
+                            ? 'bg-success-100 text-success-700'
+                            : 'bg-error-100 text-error-700';
+
+                          return (
+                            <div
+                              key={r.question_id}
+                              title={
+                                isSkipped(r)
+                                  ? 'Not answered'
+                                  : isCorrect(r)
+                                  ? `Correct (+${r.marks_awarded})`
+                                  : `Incorrect (${r.marks_awarded})`
+                              }
+                              className={`aspect-square rounded-md flex flex-col items-center justify-center text-xs font-medium ${colorClass}`}
+                            >
+                              <span>{idx + 1}</span>
+                              <StatusIcon response={r} />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-neutral-400 mt-6">
+                The answer key is not shown for this test. Scores and correctness above reflect the
+                official grading.
+              </p>
             </div>
           </>
         )}
